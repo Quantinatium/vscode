@@ -50,8 +50,10 @@ export class ChatEditor extends EditorPane {
 		super(ChatEditorInput.EditorID, group, telemetryService, themeService, storageService);
 	}
 
-	public async clear() {
-		return this.instantiationService.invokeFunction(clearChatEditor);
+	private async clear() {
+		if (this.input) {
+			return this.instantiationService.invokeFunction(clearChatEditor, this.input as ChatEditorInput);
+		}
 	}
 
 	protected override createEditor(parent: HTMLElement): void {
@@ -73,6 +75,12 @@ export class ChatEditor extends EditorPane {
 		this._register(this.widget.onDidClear(() => this.clear()));
 		this.widget.render(parent);
 		this.widget.setVisible(true);
+	}
+
+	protected override setEditorVisible(visible: boolean): void {
+		super.setEditorVisible(visible);
+
+		this.widget?.setVisible(visible);
 	}
 
 	public override focus(): void {
