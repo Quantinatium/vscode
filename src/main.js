@@ -7,7 +7,6 @@
 'use strict';
 
 /**
- * @import { IProductConfiguration } from './vs/base/common/product'
  * @import { INLSConfiguration } from './vs/nls'
  * @import { NativeParsedArgs } from './vs/platform/environment/common/argv'
  */
@@ -16,16 +15,14 @@ const perf = require('./vs/base/common/performance');
 perf.mark('code/didStartMain');
 
 const path = require('path');
-const fs = require('fs');
+const fs = require('original-fs');
 const os = require('os');
 const bootstrap = require('./bootstrap');
 const bootstrapNode = require('./bootstrap-node');
 const { getUserDataPath } = require('./vs/platform/environment/node/userDataPath');
 const { parse } = require('./vs/base/common/jsonc');
 const { getUNCHost, addUNCHostToAllowlist } = require('./vs/base/node/unc');
-/** @type {Partial<IProductConfiguration>} */
-// @ts-ignore
-const product = require('../product.json');
+const product = require('./bootstrap-meta').product;
 const { app, protocol, crashReporter, Menu } = require('electron');
 
 // Enable portable support
@@ -215,6 +212,7 @@ function configureCommandlineSwitchesSync(cliArgs) {
 	];
 
 	if (process.platform === 'linux') {
+
 		// Force enable screen readers on Linux via this flag
 		SUPPORTED_ELECTRON_SWITCHES.push('force-renderer-accessibility');
 
@@ -590,23 +588,13 @@ function getCodeCachePath() {
 }
 
 /**
- * @param {string} dir
- * @returns {Promise<string>}
- */
-function mkdirp(dir) {
-	return new Promise((resolve, reject) => {
-		fs.mkdir(dir, { recursive: true }, err => (err && err.code !== 'EEXIST') ? reject(err) : resolve(dir));
-	});
-}
-
-/**
  * @param {string | undefined} dir
  * @returns {Promise<string | undefined>}
  */
 async function mkdirpIgnoreError(dir) {
 	if (typeof dir === 'string') {
 		try {
-			await mkdirp(dir);
+			await fs.promises.mkdir(dir, { recursive: true });
 
 			return dir;
 		} catch (error) {
